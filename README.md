@@ -1,5 +1,7 @@
 # YourInfo
 
+**Live Demo: [yourinfo.hsingh.app](https://yourinfo.hsingh.app/)**
+
 A privacy awareness demonstration that shows what information websites can collect about you through browser fingerprinting and behavioral analysis.
 
 ## Features
