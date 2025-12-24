@@ -3,7 +3,7 @@
  * Main application component
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { Globe } from './components/Globe';
 import { InfoPanel } from './components/InfoPanel';
 import { useWebSocket } from './hooks/useWebSocket';
@@ -12,19 +12,25 @@ import './App.css';
 
 export default function App() {
   const { connected, visitors, currentVisitor, aiLoading, totalUniqueVisitors } = useWebSocket();
-  const [selectedVisitor, setSelectedVisitor] = useState<VisitorInfo | null>(null);
+  const [selectedVisitorId, setSelectedVisitorId] = useState<string | null>(null);
+
+  // Get the selected visitor from the visitors array (always up-to-date)
+  const selectedVisitor = useMemo(() => {
+    if (!selectedVisitorId) return null;
+    return visitors.find(v => v.id === selectedVisitorId) || null;
+  }, [selectedVisitorId, visitors]);
 
   const handleVisitorClick = useCallback((visitor: VisitorInfo) => {
     // If clicking the same visitor, close the popup
-    if (selectedVisitor?.id === visitor.id) {
-      setSelectedVisitor(null);
+    if (selectedVisitorId === visitor.id) {
+      setSelectedVisitorId(null);
     } else {
-      setSelectedVisitor(visitor);
+      setSelectedVisitorId(visitor.id);
     }
-  }, [selectedVisitor]);
+  }, [selectedVisitorId]);
 
   const handleCloseSelected = useCallback(() => {
-    setSelectedVisitor(null);
+    setSelectedVisitorId(null);
   }, []);
 
   // Determine which visitor to show in the panel
@@ -68,7 +74,7 @@ export default function App() {
       <InfoPanel
         visitor={displayedVisitor}
         isCurrentUser={isDisplayingCurrentUser ?? true}
-        onClose={selectedVisitor ? handleCloseSelected : undefined}
+        onClose={selectedVisitorId ? handleCloseSelected : undefined}
         aiLoading={aiLoading && isDisplayingCurrentUser}
       />
 
