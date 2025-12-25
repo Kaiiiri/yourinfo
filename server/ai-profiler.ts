@@ -471,6 +471,26 @@ INSTALLED APPS:
 - Spotify = music lover
 - Steam = gamer
 
+CREEPY INSIGHTS - IMPORTANT:
+The "creepyInsights" field should contain 3-5 SURPRISING deductions that combine multiple signals to reveal something unexpected.
+DO NOT include:
+- Location info (already shown separately)
+- Browser/device info (already shown separately)
+- Generic statements about fingerprinting
+- Obvious observations directly from the data
+
+GOOD creepyInsights examples:
+- "You probably just went through a breakup - late night browsing, slow typing, increased alcohol-related searches"
+- "You're likely interviewing for jobs - Zoom installed, LinkedIn active during work hours, updated resume fonts detected"
+- "You might be expecting a baby - browsing pattern shift to earlier hours, health-conscious signals, family-oriented device settings"
+- "You're probably procrastinating on something important - high tab switch count, rage clicks, irregular focus patterns"
+- "Your sleep schedule suggests you work with teams in Asia/Europe - active hours don't match your timezone"
+- "You're likely dealing with a health issue - WebMD in history, late night anxiety patterns, health app installed"
+- "You might be planning a big purchase - comparison shopping patterns, price tracker extensions, budget consciousness"
+- "You're probably in a long-distance relationship - video calling apps, late night activity, timezone mismatch patterns"
+
+Be creative and connect dots across multiple data points to make surprising but plausible inferences.
+
 Be conservative and only infer based on strong signals - avoid speculation when data is insufficient.
 
 Respond ONLY with the JSON object, no explanation.`;
@@ -636,6 +656,12 @@ function parseAIResponse(response: string): UserProfile | null {
       cleaned = cleaned.slice(0, -3);
     }
     cleaned = cleaned.trim();
+
+    // Remove JavaScript-style comments (// ...) that some models add
+    cleaned = cleaned.replace(/\/\/[^\n]*/g, '');
+
+    // Remove trailing commas before } or ] (common JSON error)
+    cleaned = cleaned.replace(/,\s*([\}\]])/g, '$1');
 
     const parsed = JSON.parse(cleaned);
 
