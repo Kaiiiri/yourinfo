@@ -1031,3 +1031,270 @@ export async function getTotalUniqueVisitors(): Promise<number> {
   }
   return 0;
 }
+
+/**
+ * AI-powered Ad Auction Generation
+ * Uses Grok/MiMo to generate personalized bids based on user profile
+ */
+
+export interface AuctionBid {
+  bidder: string;
+  cpm: number;
+  status: 'bid' | 'no-bid';
+  reason: string;
+}
+
+export interface AuctionValueFactor {
+  factor: string;
+  impact: string;
+  impactValue: number;
+  emoji: string;
+  description: string;
+}
+
+export interface AIAuctionResult {
+  bids: AuctionBid[];
+  valueFactors: AuctionValueFactor[];
+  source: 'grok' | 'mimo' | 'fallback';
+}
+
+function buildAuctionPrompt(profileSummary: string, country: string, countryCode: string): string {
+  return `You are simulating a real-time bidding (RTB) ad auction for an educational privacy demo.
+
+USER PROFILE:
+${profileSummary}
+Location: ${country} (${countryCode})
+
+Generate a realistic RTB auction with 15-25 ad companies bidding for this user. You must:
+
+1. CHOOSE RELEVANT COMPANIES dynamically based on the user's location and profile:
+   - Always include major global DSPs: Google, Meta, Amazon, Criteo, The Trade Desk
+   - Add LOCAL/REGIONAL ad networks for the user's country:
+     * Russia: Yandex Ads, VK Ads, MyTarget
+     * China: Baidu, Tencent Ads, Alibaba TANX
+     * Japan: Rakuten Advertising, Yahoo Japan, LINE Ads
+     * Korea: Naver Ads, Kakao Ads
+     * India: Flipkart Ads, InMobi, Hotstar Ads
+     * Brazil/LATAM: Mercado Ads, Globo Ads
+     * Germany/EU: Zalando, OTTO, Axel Springer
+     * Middle East: Noon Ads, Careem Ads
+     * Southeast Asia: Grab Ads, Shopee Ads, Tokopedia
+     * Add other relevant local networks for any country
+   - Add SPECIALIZED companies based on user profile:
+     * Gamer? → Twitch, Discord Ads, Unity Ads, Steam
+     * Developer? → LinkedIn, GitHub Sponsors, Stack Overflow
+     * Young (Gen Z)? → TikTok, Snapchat, Instagram
+     * Crypto user? → Coinbase, Binance, Brave Ads
+     * Professional? → LinkedIn, Indeed, Glassdoor
+     * Music fan? → Spotify, Pandora, SoundCloud
+
+2. PRICE BASED ON COUNTRY (CPM ranges):
+   - Tier 1 (US, UK, AU, CA, DE, CH): $1.50-$4.00
+   - Tier 2 (FR, JP, IT, ES, NL, KR): $0.80-$2.00
+   - Tier 3 (BR, MX, PL, RU, TR): $0.30-$1.00
+   - Tier 4 (IN, ID, PH, VN, NG): $0.05-$0.40
+
+3. ADJUST FOR USER VALUE:
+   - Premium device → +30-50%
+   - Developer/Professional → +40%
+   - Crypto wallets → +50% for finance ads
+   - Ad blocker detected → -70% (most won't bid)
+   - VPN detected → -40%
+   - High income signals → +50%
+
+4. SOME COMPANIES SHOULD "NO-BID" with reasons (targeting mismatch, budget, etc.)
+
+Respond ONLY with valid JSON (no markdown, no code blocks):
+{
+  "bids": [
+    {"bidder": "Google Ads", "cpm": 1.45, "status": "bid", "reason": "Cross-platform data enables precise targeting"},
+    {"bidder": "LinkedIn Ads", "cpm": 2.10, "status": "bid", "reason": "Developer profile matches B2B targeting"},
+    {"bidder": "Yandex Ads", "cpm": 0, "status": "no-bid", "reason": "User outside target region"}
+  ],
+  "valueFactors": [
+    {"factor": "Premium Device", "impact": "+50%", "impactValue": 1.5, "description": "MacBook Pro indicates high purchasing power"},
+    {"factor": "Canada Location", "impact": "+80%", "impactValue": 1.8, "description": "Tier 1 advertising market"}
+  ]
+}
+
+IMPORTANT:
+- Use full company names as bidder (e.g., "Google Ads" not "google")
+- Do NOT include emojis in the response
+- Be creative with local companies`;
+}
+
+function parseAuctionResponse(text: string): AIAuctionResult | null {
+  try {
+    // Remove markdown code blocks if present
+    let cleaned = text.trim();
+    if (cleaned.startsWith('```')) {
+      cleaned = cleaned.replace(/```(?:json)?\n?/g, '').trim();
+    }
+
+    const parsed = JSON.parse(cleaned);
+
+    if (!parsed.bids || !Array.isArray(parsed.bids)) {
+      return null;
+    }
+
+    return {
+      bids: parsed.bids,
+      valueFactors: parsed.valueFactors || [],
+      source: 'grok',
+    };
+  } catch (err) {
+    console.error('Failed to parse auction response:', err);
+    return null;
+  }
+}
+
+// Cache TTL for auction results (1 hour)
+const AUCTION_CACHE_TTL = 60 * 60;
+
+async function getAuctionCache(cacheKey: string): Promise<AIAuctionResult | null> {
+  try {
+    const client = await getRedis();
+    if (!client) return null;
+
+    const cached = await client.get(cacheKey);
+    if (cached) {
+      console.log('Cache hit for auction:', cacheKey);
+      return JSON.parse(cached);
+    }
+  } catch (err) {
+    console.error('Redis auction cache get error:', err);
+  }
+  return null;
+}
+
+async function setAuctionCache(cacheKey: string, result: AIAuctionResult): Promise<void> {
+  try {
+    const client = await getRedis();
+    if (!client) return;
+
+    await client.setEx(cacheKey, AUCTION_CACHE_TTL, JSON.stringify(result));
+    console.log('Cached auction:', cacheKey);
+  } catch (err) {
+    console.error('Redis auction cache set error:', err);
+  }
+}
+
+export async function generateAIAuction(
+  profileSummary: string,
+  country: string,
+  countryCode: string
+): Promise<AIAuctionResult> {
+  // Create cache key from profile summary hash + country
+  const profileHash = Buffer.from(profileSummary).toString('base64').slice(0, 32);
+  const cacheKey = `yourinfo:auction:${profileHash}:${countryCode}`;
+
+  // Check cache first
+  const cached = await getAuctionCache(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  const prompt = buildAuctionPrompt(profileSummary, country, countryCode);
+  const systemMessage = 'You are an ad auction simulator. Generate realistic RTB bids based on user profiles. Always respond with valid JSON only, no markdown.';
+
+  // Helper to call MiMo
+  async function tryMiMo(): Promise<AIAuctionResult | null> {
+    if (!OPENROUTER_API_KEY) return null;
+
+    try {
+      console.log('AI Auction: Trying MiMo...');
+      const response = await fetch(OPENROUTER_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+          'HTTP-Referer': 'https://yourinfo.hsingh.app',
+          'X-Title': 'YourInfo Privacy Demo',
+        },
+        body: JSON.stringify({
+          model: MIMO_MODEL,
+          messages: [
+            { role: 'system', content: systemMessage },
+            { role: 'user', content: prompt }
+          ],
+          max_tokens: 4096,
+          temperature: 0.7,
+        }),
+      });
+
+      if (!response.ok) {
+        console.error('MiMo auction error:', response.status);
+        return null;
+      }
+
+      const data = await response.json();
+      const text = data.choices?.[0]?.message?.content;
+      if (!text) return null;
+
+      const result = parseAuctionResponse(text);
+      if (result) {
+        result.source = 'mimo';
+        return result;
+      }
+    } catch (err) {
+      console.error('MiMo auction error:', err);
+    }
+    return null;
+  }
+
+  // Try Grok first
+  if (GROK_API_KEY) {
+    try {
+      console.log('AI Auction: Trying Grok...');
+      const response = await fetch(GROK_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${GROK_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: 'grok-4-1-fast-reasoning',
+          messages: [
+            { role: 'system', content: systemMessage },
+            { role: 'user', content: prompt }
+          ],
+          stream: false,
+          temperature: 0.7,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const text = data.choices?.[0]?.message?.content;
+        if (text) {
+          const result = parseAuctionResponse(text);
+          if (result) {
+            console.log('AI Auction: Grok success');
+            result.source = 'grok';
+            await setAuctionCache(cacheKey, result);
+            return result;
+          }
+        }
+      }
+      console.error('Grok auction failed, trying MiMo...');
+    } catch (err) {
+      console.error('Grok auction error:', err);
+    }
+  }
+
+  // Try MiMo fallback
+  const mimoResult = await tryMiMo();
+  if (mimoResult) {
+    console.log('AI Auction: MiMo success');
+    await setAuctionCache(cacheKey, mimoResult);
+    return mimoResult;
+  }
+
+  // Final fallback - return empty result (frontend will use calculated fallback)
+  console.log('AI Auction: All AI failed, returning fallback signal');
+  return {
+    bids: [],
+    valueFactors: [],
+    source: 'fallback',
+  };
+}

@@ -7,7 +7,7 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { getGeolocation } from './geolocation';
-import { generateAIProfile, trackUniqueVisitor, getTotalUniqueVisitors, type GeoData } from './ai-profiler';
+import { generateAIProfile, generateAIAuction, trackUniqueVisitor, getTotalUniqueVisitors, type GeoData } from './ai-profiler';
 import {
   initSharedVisitors,
   onVisitorEvent,
@@ -151,6 +151,33 @@ app.post('/api/profile', async (c) => {
   } catch (err) {
     console.error('Profile endpoint error:', err);
     return c.json({ error: 'Internal server error', source: 'fallback' }, 500);
+  }
+});
+
+/** AI-powered ad auction endpoint */
+app.post('/api/ai-auction', async (c) => {
+  try {
+    const body = await c.req.json();
+    const { profileSummary, country, countryCode } = body;
+
+    if (!profileSummary) {
+      return c.json({ error: 'profileSummary required' }, 400);
+    }
+
+    const result = await generateAIAuction(
+      profileSummary,
+      country || 'Unknown',
+      countryCode || 'XX'
+    );
+
+    return c.json({
+      bids: result.bids,
+      valueFactors: result.valueFactors,
+      source: result.source,
+    });
+  } catch (err) {
+    console.error('AI Auction endpoint error:', err);
+    return c.json({ bids: [], valueFactors: [], source: 'fallback' }, 500);
   }
 });
 

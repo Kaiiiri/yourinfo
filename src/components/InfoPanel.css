@@ -382,7 +382,7 @@
   }
 
   .info-panel-footer {
-    padding: 10px 16px;
+    display: none;
   }
 
   .privacy-tips {

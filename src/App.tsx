@@ -6,6 +6,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import { Globe } from './components/Globe';
 import { InfoPanel } from './components/InfoPanel';
+import { AdAuction } from './components/AdAuction';
 import { useWebSocket } from './hooks/useWebSocket';
 import type { VisitorInfo } from './types';
 import './App.css';
@@ -79,6 +80,11 @@ export default function App() {
         </div>
       )}
 
+      {/* Left Panel - Ad Auction */}
+      <aside className="left-panel">
+        <AdAuction visitor={currentVisitor} />
+      </aside>
+
       {/* Globe */}
       <div className="globe-container">
         <Globe
@@ -88,7 +94,7 @@ export default function App() {
         />
       </div>
 
-      {/* Info Panel */}
+      {/* Right Panel - Info Panel */}
       <InfoPanel
         visitor={displayedVisitor}
         isCurrentUser={isDisplayingCurrentUser ?? true}

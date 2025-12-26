@@ -41,7 +41,7 @@ html, body, #root {
 .app-header {
   position: fixed;
   top: 0;
-  left: 0;
+  left: 340px;
   right: 380px;
   height: 70px;
   display: flex;
@@ -51,6 +51,17 @@ html, body, #root {
   background: var(--black);
   border-bottom: 4px solid var(--yellow);
   z-index: 50;
+}
+
+/* Left Panel - Ad Auction */
+.left-panel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 340px;
+  z-index: 60;
+  overflow: hidden;
 }
 
 .app-logo {
@@ -156,7 +167,7 @@ html, body, #root {
 .ai-credits-banner {
   position: fixed;
   top: 70px;
-  left: 0;
+  left: 340px;
   right: 380px;
   background: linear-gradient(90deg, #ff6b6b, #ff8e53);
   color: var(--white);
@@ -212,7 +223,7 @@ html, body, #root {
 .globe-container {
   position: fixed;
   top: 70px;
-  left: 0;
+  left: 340px;
   right: 380px;
   bottom: 50px;
   background: var(--white);
@@ -238,7 +249,7 @@ html, body, #root {
 .app-footer {
   position: fixed;
   bottom: 0;
-  left: 0;
+  left: 340px;
   right: 380px;
   height: 50px;
   display: flex;
@@ -291,9 +302,45 @@ html, body, #root {
   border-color: var(--black) transparent transparent;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
+/* Responsive - Tablet */
+@media (max-width: 1200px) {
+  .left-panel {
+    width: 300px;
+  }
+
   .app-header {
+    left: 300px;
+  }
+
+  .ai-credits-banner {
+    left: 300px;
+  }
+
+  .globe-container {
+    left: 300px;
+  }
+
+  .app-footer {
+    left: 300px;
+  }
+}
+
+/* Responsive - Mobile */
+@media (max-width: 768px) {
+  .left-panel {
+    position: fixed;
+    top: 50px;
+    left: 0;
+    right: 0;
+    bottom: auto;
+    width: 100%;
+    height: auto;
+    z-index: 55;
+    overflow: visible;
+  }
+
+  .app-header {
+    left: 0;
     right: 0;
     height: 50px;
     padding: 0 12px;
@@ -345,10 +392,18 @@ html, body, #root {
     height: 10px;
   }
 
-  .globe-container {
-    top: 50px;
+  .ai-credits-banner {
+    left: 0;
     right: 0;
-    bottom: 55%;
+    top: 50px;
+  }
+
+  /* Globe takes most of the screen on mobile */
+  .globe-container {
+    top: 100px; /* header (50px) + auction bar (~50px) */
+    left: 0;
+    right: 0;
+    bottom: 45%;
   }
 
   .app-footer {
